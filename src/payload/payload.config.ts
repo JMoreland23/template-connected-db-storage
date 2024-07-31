@@ -29,6 +29,8 @@ import { Header } from './globals/Header'
 import { Settings } from './globals/Settings'
 import { priceUpdated } from './stripe/webhooks/priceUpdated'
 import { productUpdated } from './stripe/webhooks/productUpdated'
+import { s3Adapter } from '@payloadcms/plugin-cloud-storage/s3';
+import { cloudStorage } from '@payloadcms/plugin-cloud-storage'
 
 const generateTitle: GenerateTitle = () => {
   return 'My Store'
@@ -39,6 +41,20 @@ const mockModulePath = path.resolve(__dirname, './emptyModuleMock.js')
 dotenv.config({
   path: path.resolve(__dirname, '../../.env'),
 })
+
+const storageAdapter = s3Adapter({
+            config: {
+              endpoint: process.env.AWS_S3_ENDPOINT, // Replace with your bucket's endpoint
+              region: process.env.AWS_S3_REGION, // Your bucket's region
+              credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+              }
+      }, 
+      bucket: process.env.S3_BUCKET_NAME,
+    })
+
+
 
 export default buildConfig({
   admin: {
@@ -121,6 +137,13 @@ export default buildConfig({
     },
   ],
   plugins: [
+    cloudStorage({
+      collections: {
+        'media' : {
+          adapter: storageAdapter,
+        }
+      }
+    }),
     // formBuilder({}),
     stripePlugin({
       stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
